@@ -10,9 +10,9 @@ Both the disk with my original source (and the Apple IIc itself) are long gone, 
 ![alt text](https://github.com/csf/wator-wasm/raw/master/images/wator-screen.png "Wa-Tor WebAssembly Screenshot")
 
 ## Run It
-You can either [run it here in your browser](https://csf.github.io/wator-wasm/index.html) or clone, build, and run it yourself following instructions at [Hello, Rust!](https://hellorust.com/), navigate to the html directory, and serve it up with something like `python -m http.server 9000` or however you want to deploy.
+You can either [run it here in your browser](https://csf.github.io/wator-wasm/index.html) or clone and build it yourself following instructions at [Hello, Rust!](https://www.hellorust.com/setup/wasm-target/). Once built or cloned, navigate to the `html` directory, and serve it up with something like `python -m http.server 9000` or however you choose to deploy.
 
-More specifically, to build once you have rust and wasm-gc (optional, but shrinks the `.wasm` file size) installed, navigate to the root and do this:
+More specifically, if you have installed Rust and wasm-gc (optional, but shrinks the `.wasm` file size by cleaning up unused dependencies), navigate to the root and build with Rust nightly:
 
     cargo build --release --target=wasm32-unknown-unknown
     wasm-gc target/wasm32-unknown-unknown/release/wator.wasm html/wator.wasm
