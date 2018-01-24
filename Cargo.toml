@@ -1,0 +1,11 @@
+[package]
+name = "wator"
+version = "0.1.0"
+authors = ["Chris Finn <chris.finn@gmail.com>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+lazy_static = "1.0"
+

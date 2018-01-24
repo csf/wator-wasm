@@ -1,0 +1,214 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+		<style>
+			body {
+				font-family: system, -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Helvetica", "Lucida Grande", sans-serif;
+				font-size: 80%;
+				margin: 0;
+			}
+			#canvasHolder {
+				width: 100%;
+				height: calc(100% - 2em);
+			}
+			#canvas {
+				width: 100%;
+			}
+			input[type="number"] {
+				width: 5em;
+				text-align: right;
+			}
+			fieldset {
+				min-width: min-content;
+				display: inline;
+				border: 2px solid rgb(255, 175, 175);
+				border-radius: 4px;
+				background: #ffe6e6;
+			}
+			fieldset {
+				margin: 1em 0 0 .5em;
+			}
+			fieldset legend {
+				font-size: 60%;
+				background-color: rgb(255, 175, 175);
+				padding: 2px 5px;
+				border-radius: 4px;
+				font-weight: bold;
+			}
+			label:not(:first-child) {
+				margin-left: 1em;
+			}
+			#param-form {
+				margin-top: 0.5em;
+				margin-bottom: 0;
+			}
+			#buttonWrap {
+				display: inline;
+			}
+			#fieldSets {
+				display: inline;
+			}
+			#restartButton {
+				background-color: #ffe6e6;
+				border-radius: 4px;
+				border: 2px solid rgb(255, 175, 175);
+				font-size: 125%;
+				transform: translateY(100%);
+				position: relative;
+				margin-left: .5em;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="canvasHolder">
+			<!-- NOTE: the canvas height and width are NOT CSS styling. CSS scales this. -->
+			<canvas id="canvas" height="460" width="1000"></canvas> 
+			<form id="param-form">
+				<div id="fieldsets">
+				<fieldset>
+					<label>Fish: <input type="number" min="0" name="fish" value="200" /></label>
+					<label>Sharks: <input type="number" min="0" name="sharks" value="20" /></label>
+					<legend>COUNT</legend>
+				</fieldset>
+				<fieldset>
+					<label>Fish: <input type="number" min="0" name="fish_spawn" value="3" /></label>
+					<label>Sharks: <input type="number" min="0" name="shark_spawn" value="7" /></label>
+					<legend>SPAWN</legend>
+				</fieldset>
+				<fieldset>
+					<label>Sharks: <input type="number" min="0" name="shark_starve" value="5" /></label>
+					<legend>STARVE</legend>
+				</fieldset>
+				</div>
+				<div id="buttonWrap"><button id="restartButton" type="submit">Restart</button></div>
+			</form>
+		</div>
+		<script>
+			function resources() {
+				let res = {
+					fish: document.createElement('canvas'),
+					shark: document.createElement('canvas')
+				}
+
+				res.fish.width=10;
+				res.fish.height=10;
+				let fCtx = res.fish.getContext('2d');
+				fCtx.fillStyle='white';
+				fCtx.beginPath();
+				fCtx.arc(5, 5, 3, 0, 2 * Math.PI);
+				fCtx.fill();
+
+				res.shark.width=10;
+				res.shark.height=10;
+				let sCtx = res.shark.getContext('2d');
+				sCtx.fillStyle = 'red';
+				sCtx.beginPath();
+				sCtx.arc(5, 5, 4, 0, 2 * Math.PI);
+				sCtx.fill();
+
+				return res;
+			}
+
+			let canvas = document.getElementById('canvas');
+
+			function imports() {
+				const res = resources();
+				const spacing = 2;
+
+				var ctx = canvas.getContext('2d');
+
+				function clear_screen() {
+					ctx.fillStyle = 'black';
+					ctx.fillRect(0, 0, canvas.width, canvas.height);
+				}
+
+				function draw_shark(x, y) {
+					ctx.drawImage(res.shark, (spacing * (x+1)) - 10, (spacing * (y+1)) - 10);
+				}
+
+				function draw_fish(x, y) {
+					ctx.drawImage(res.fish, (spacing * (x+1)) - 10, (spacing * (y+1)) - 10);
+				}
+
+				function draw_status(fishCt, sharkCt) {
+					ctx.fillStyle='white';
+					ctx.textBaseline = 'top';
+					ctx.font = '20px sans-serif';
+					ctx.fillText("Fish: " + fishCt + "  Sharks: " + sharkCt, 10, 10);
+				}
+
+				function draw_debug(timestamp,fps) {
+					ctx.fillStyle='yellow';
+					ctx.textBaseline = 'top';
+					ctx.font = '12px sans-serif';
+					ctx.fillText("T: " + timestamp, canvas.width-200, 30);
+					ctx.fillText("fps: " + fps, canvas.width-200, 40);
+				}
+				
+				let imports = {clear_screen, draw_shark, draw_fish, draw_status, draw_debug};
+				return imports;
+			}
+
+			fetch("wator.wasm").then(response => 
+					response.arrayBuffer()
+				).then(bytes =>
+					WebAssembly.instantiate(bytes, { env: imports() })
+				).then(results => {
+					let module = {};
+					let mod = results.instance;
+					module.update = mod.exports.update;
+					module.resize = mod.exports.resize;
+					module.draw = mod.exports.draw;
+					module.init = mod.exports.init;
+
+					module.init(Date.now(), 100, 40, 100, 20, 3, 7, 5);
+					
+					function resize() {
+						module.resize(canvas.width, canvas.height);
+					}
+
+					function processForm(e) {
+						if (e.preventDefault) e.preventDefault();
+						f = e.target;
+						module.init(Date.now(), 100, 40, f.fish.value, f.sharks.value, f.fish_spawn.value, f.shark_spawn.value, f.shark_starve.value);
+						return false;
+					}
+
+					var form = document.getElementById('param-form');
+					if (form.attachEvent) {
+						    form.attachEvent("submit", processForm);
+					} else {
+						    form.addEventListener("submit", processForm);
+					}
+
+					window.addEventListener('resize', () => {
+						resize();
+					});
+
+					// Gameloop ideas based on https://github.com/aochagavia/rocket_wasm demo
+					let start = null;
+					let prevTimestamp = null;
+					let drawAndUpdate = (timestamp) => {
+						if (!prevTimestamp) {
+							start = timestamp;
+							prevTimestamp = timestamp;
+							requestAnimationFrame(drawAndUpdate);
+							return;
+						}
+
+						let progress = (timestamp - prevTimestamp) / 1000;
+						module.update(progress);
+						module.draw();
+
+						prevTimestamp = timestamp;
+						requestAnimationFrame(drawAndUpdate);
+
+					};
+
+					resize();
+					drawAndUpdate();
+				});
+		</script>
+	</body>
+
+</html>
