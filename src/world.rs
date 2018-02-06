@@ -29,7 +29,8 @@ impl ParticleList {
         self.items.push(p);
     }
 
-    pub fn _len(&self) -> usize {
+    #[cfg(test)]
+    pub fn len(&self) -> usize {
         self.items.len()
     }
 
@@ -267,8 +268,8 @@ mod tests {
         w.initial_placement(Some(CellType::Fish), &mut rng);
         w.initial_placement(Some(CellType::Shark), &mut rng);
 
-        assert!(w.fish_list._len() == 1);
-        assert!(w.shark_list._len() == 1);
+        assert!(w.fish_list.len() == 1);
+        assert!(w.shark_list.len() == 1);
     }
 
     #[test]
@@ -309,8 +310,8 @@ mod tests {
         w.init(42);
         assert!(w.initialized);
 
-        assert!(w.fish_list._len() == 1);
-        assert!(w.shark_list._len() == 1);
+        assert!(w.fish_list.len() == 1);
+        assert!(w.shark_list.len() == 1);
 
     }
 
@@ -321,14 +322,14 @@ mod tests {
         let (r,c) = w.find_random_empty_cell(&mut rng);
         assert!(w.fish_list.find(r,c).is_none());
         assert!(w.shark_list.find(r,c).is_none());
-        assert!(w.fish_list._len() == 0);
-        assert!(w.shark_list._len() == 0);
+        assert!(w.fish_list.len() == 0);
+        assert!(w.shark_list.len() == 0);
 
         let mut w: WorldState = WorldState::new(5,5,1,1,1,1,1);
         for i in 0..24 {
             w.fish_list.add( Particle { row: i / 5, col: i % 5, born: 0, ate: 0, reproduced: 0 } )
         }
-        assert!(w.fish_list._len() == 24);
+        assert!(w.fish_list.len() == 24);
         assert!(w.fish_list.find(4,4).is_none());
         let (r,c) = w.find_random_empty_cell(&mut rng);
         assert!(r == 4);
@@ -343,9 +344,9 @@ mod tests {
         p.add( Particle { row: 1, col: 0, ate: 0, reproduced: 0, born: 0} );
         p.add( Particle { row: 0, col: 1, ate: 0, reproduced: 0, born: 0} );
         p.add( Particle { row: 1, col: 1, ate: 0, reproduced: 0, born: 0} );
-        assert!(p._len() == 4);
+        assert!(p.len() == 4);
         p.remove_at(1,1);
-        assert!(p._len() == 3);
+        assert!(p.len() == 3);
         assert!(p.find(1,1).is_none());
     }
 }
